@@ -26,8 +26,8 @@ const popularArtistsPipeline = [
     $group: {
       _id: "$artists",
       track_count: { $sum: 1 },
-      min_popularity: { $min: "$popularity" }, 
-      avg_popularity: { $avg: "$popularity" }, 
+      min_popularity: { $min: "$popularity" },
+      avg_popularity: { $avg: "$popularity" },
     },
   },
   // match
@@ -41,22 +41,70 @@ const popularArtistsPipeline = [
   {
     $sort: { avg_popularity: -1 },
   },
-  { $limit: 20},
-  // Project output 
+  { $limit: 20 },
+  // Project output
   {
     $project: {
-      _id: 0, 
-      artist: "$_id", 
+      _id: 0,
+      artist: "$_id",
       track_count: 1,
       min_popularity: 1,
-      avg_popularity: { $round: ["$avg_popularity", 1] }
-    }
-  }
+      avg_popularity: { $round: ["$avg_popularity", 1] },
+    },
+  },
 ];
 
 // Execute the aggregation
 const topArtists = db.tracks.aggregate(popularArtistsPipeline).toArray();
 
 // Console results
-console.log("Top 20 Popular Artists:");
-console.log(JSON.stringify(topArtists, null, 2));
+// console.log("Top 20 Popular Artists:");
+// console.log(JSON.stringify(topArtists, null, 2));
+
+// Non-typicAL tracks
+const nonTypicaltracksPipeline = [
+  {
+    $group: {
+      _id: "$track_genre",
+      avg_tempo: { $avg: "$audio_features.tempo" },
+      std_tempo: { $stdDevPop: "$audio_features.tempo" },
+      all_tracks: {
+        $push: {
+          _id: "$_id",
+          track_name: "$track_name",
+          popularity: "$popularity",
+          artists: "$artists",
+          audio_features: { tempo: "$audio_features.tempo" },
+        },
+      },
+    },
+  },
+  {
+    $addFields: {
+      outlier_threshold: {
+        $add: ["$avg_tempo", { $multiply: [2, "$std_tempo"] }],
+      },
+    },
+  },
+  {
+    $project: {
+      _id: 0,
+      genre: "$_id",
+      avg_tempo: { $round: ["$avg_tempo", 1] },
+      outlier_threshold: { $round: ["$outlier_threshold", 1] },
+      outlier_tracks: {
+        $filter: {
+          input: "$all_tracks",
+          as: "track",
+          cond: { $gt: ["$$track.audio_features.tempo", "$outlier_threshold"] },
+        },
+      },
+    },
+  },
+];
+
+const outlierResults = db.tracks.aggregate(nonTypicaltracksPipeline).toArray();
+
+// Console res
+console.log("Outlier Tracks Analysis:");
+console.log(JSON.stringify(outlierResults.slice(0, 2), null, 2));
