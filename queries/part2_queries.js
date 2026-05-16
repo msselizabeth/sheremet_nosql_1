@@ -11,12 +11,13 @@ const partyQuery = {
 };
 
 // Execure the party query
-// const partyTracks = db.tracks.find(partyQuery).toArray();
+const partyTracks = db.tracks.find(partyQuery).toArray();
 
 // Consle results
-// console.log(`Found ${partyTracks.length} tracks for the party!`);
-// console.log("Party sample track:");
-// console.log(JSON.stringify(partyTracks[0], null, 2));
+console.log("Part 2 -> Task 1\n")
+console.log(`Found ${partyTracks.length} tracks for the party!`);
+console.log("Party sample track:");
+console.log(JSON.stringify(partyTracks[0], null, 2), "\n\n");
 
 // 2.2 Popular Artists
 const popularArtistsPipeline = [
@@ -58,8 +59,9 @@ const popularArtistsPipeline = [
 const topArtists = db.tracks.aggregate(popularArtistsPipeline).toArray();
 
 // Console results
-// console.log("Top 20 Popular Artists:");
-// console.log(JSON.stringify(topArtists, null, 2));
+console.log("Part 2 -> Task 2\n")
+console.log("Top 20 Popular Artists:");
+console.log(JSON.stringify(topArtists, null, 2), "\n\n");
 
 // Non-typicAL tracks
 const nonTypicaltracksPipeline = [
@@ -106,5 +108,26 @@ const nonTypicaltracksPipeline = [
 const outlierResults = db.tracks.aggregate(nonTypicaltracksPipeline).toArray();
 
 // Console res
+console.log("Part 2 -> Task 3\n")
 console.log("Outlier Tracks Analysis:");
-console.log(JSON.stringify(outlierResults.slice(0, 2), null, 2));
+console.log(JSON.stringify(outlierResults.slice(0, 2), null, 2), "\n\n");
+
+// Background Tracks
+// Background query
+const backgroundQuery = {
+  "audio_features.loudness": { $lt: -10 },
+  "audio_features.speechiness": { $lt: 0.1 },
+  "audio_features.instrumentalness": { $gt: 0.5 },
+  explicit: false,
+};
+
+const backgroundTracks = db.tracks.find(backgroundQuery).toArray();
+
+// Results
+console.log("Part 2 -> Task 4\n")
+console.log(`Found ${backgroundTracks.length} tracks for background work.`);
+
+if (backgroundTracks.length > 0) {
+  console.log("Sample background track:");
+  console.log(JSON.stringify(backgroundTracks[0], null, 2));
+}
