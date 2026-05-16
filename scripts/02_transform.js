@@ -1,4 +1,4 @@
-// RUN: mongosh "mongodb+srv://elizabethsheremet_db_user:X9rICOiM65zySQ5P@nosql-hw-1.zi9kla4.mongodb.net/" scripts/02_transform.js
+
 const db = db.getSiblingDB("spotify");
 
 db.tracks.drop();
