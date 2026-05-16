@@ -1,4 +1,3 @@
-# scripts/01_load_data.py
 import os
 import ast
 import kagglehub

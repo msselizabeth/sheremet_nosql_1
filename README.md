@@ -2,9 +2,72 @@
 
 ### Setup
 
-- create venv envinromnet
-- create .env file ( sample in .envsample)
-- activate env and install reqs
+#### Встановлення залежностей:
+
+```
+pip install -r requirements.txt
+```
+
+#### Configuration
+
+Створіть файл .env у кореневій директорії та додайте ваш рядок підключення до MongoDB.
+
+Приклад рядка наведений в `.envsample` в корневій директорії.
+
+#### Порядок запуску скриптів:
+
+```
+# Завантаження сирих даних (CSV → MongoDB):
+python scripts/01_load_data.py
+
+# Трансформація в документоорієнтовану схему:
+mongosh "YOUR_MONGO_URI" scripts/02_transform.js
+```
+
+### Схема даних
+
+Основні поля:
+
+- `artists:` масив рядків (замість одного рядка через крапку з комою).
+- `audio_features:` вкладений об'єкт з технічними характеристиками (energy, tempo, тощо).
+- `duration_sec:` обчислюване поле (тривалість у секундах).
+- `popularity_tier:` категоріальне поле (low, medium, high).
+
+Приклад документа (JSON):
+
+```
+{
+  "_id": {
+    "$oid": "6a05053ef1b639c68ae978e3"
+  },
+  "track_id": "5SuOikwiRyPMVoIQDJUgSV",
+  "album_name": "Comedy",
+  "track_name": "Comedy",
+  "popularity": 73,
+  "duration_ms": 230666,
+  "explicit": false,
+  "track_genre": "acoustic",
+  "audio_features": {
+    "danceability": 0.676,
+    "energy": 0.461,
+    "loudness": -6.746,
+    "speechiness": 0.143,
+    "acousticness": 0.0322,
+    "instrumentalness": 0.00000101,
+    "liveness": 0.358,
+    "valence": 0.715,
+    "tempo": 87.917,
+    "key": 1,
+    "mode": 0,
+    "time_signature": 4
+  },
+  "duration_sec": 230.7,
+  "popularity_tier": "high",
+  "artists": [
+    "Gen Hoshino"
+  ]
+}
+```
 
 ## Part 1
 
@@ -13,7 +76,7 @@
    Винесення в `audio_features` застосовується для логічного групування даних (Data Cohesion).
 
    **Вигідно:**
-   - Коли клієнту або фронтенду потрібні всі технічні метрики треку одразу, їх можна отримати одним запитом не перелічуючи десяток окремих полів.
+   - Коли фронтенду потрібні всі технічні метрики треку одразу, їх можна отримати одним запитом не перелічуючи десяток окремих полів.
    - Документ стає більш читабельним, відділяючи базові метадані (назва, альбом, тривалість).
 
    \*Створює проблеми:\*\*
@@ -94,6 +157,82 @@
             }
     }
 }
+```
+### Task 2
+
+Показники explain():
+- Stage: FETCH (inputStage: IXSCAN)
+- Execution Time: 48 ms
+- Total Docs Examined: 16,141
+- Total Keys Examined: 16,602
+
+```
+{
+  "executionSuccess": true,
+  "nReturned": 16141,
+  "executionTimeMillis": 48,
+  "totalKeysExamined": 16602,
+  "totalDocsExamined": 16141,
+  "executionStages": {
+    "isCached": false,
+    "stage": "FETCH",
+    "nReturned": 16141,
+    "executionTimeMillisEstimate": 46,
+    "works": 16602,
+    "advanced": 16141,
+    "needTime": 460,
+    "needYield": 0,
+    "saveState": 3,
+    "restoreState": 3,
+    "isEOF": 1,
+    "docsExamined": 16141,
+    "alreadyHasObj": 0,
+    "inputStage": {
+      "stage": "IXSCAN",
+      "nReturned": 16141,
+      "executionTimeMillisEstimate": 25,
+      "works": 16602,
+      "advanced": 16141,
+      "needTime": 460,
+      "needYield": 0,
+      "saveState": 3,
+      "restoreState": 3,
+      "isEOF": 1,
+      "keyPattern": {
+        "explicit": 1,
+        "audio_features.instrumentalness": 1,
+        "audio_features.speechiness": 1
+      },
+      "indexName": "explicit_1_audio_features.instrumentalness_1_audio_features.speechiness_1",
+      "isMultiKey": false,
+      "multiKeyPaths": {
+        "explicit": [],
+        "audio_features.instrumentalness": [],
+        "audio_features.speechiness": []
+      },
+      "isUnique": false,
+      "isSparse": false,
+      "isPartial": false,
+      "indexVersion": 2,
+      "direction": "forward",
+      "indexBounds": {
+        "explicit": [
+          "[false, false]"
+        ],
+        "audio_features.instrumentalness": [
+          "(0.5, inf.0]"
+        ],
+        "audio_features.speechiness": [
+          "[-inf.0, 0.1)"
+        ]
+      },
+      "keysExamined": 16602,
+      "seeks": 461,
+      "dupsTested": 0,
+      "dupsDropped": 0
+    }
+  }
+} 
 ```
 
 ### Task 3
