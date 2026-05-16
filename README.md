@@ -1,5 +1,7 @@
 ## HW 1
 
+Repo: https://github.com/msselizabeth/sheremet_nosql_1.git
+
 ### Setup
 
 #### Встановлення залежностей:
